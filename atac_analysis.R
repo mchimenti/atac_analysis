@@ -79,6 +79,11 @@ make_plots <- function(granges_obj, tag_matrix){
   
 }
 
+plot_abs_anno_bar <- function(anno_tab) {
+  p <- ggplot(anno_tab, aes(x=Feature, y = absval)) + geom_bar(stat = "identity") 
+  p <- p + theme(axis.text.x = element_text(size = 5, face = "bold"))
+}
+
 
 ###########
 ## Analysis
@@ -86,15 +91,27 @@ make_plots <- function(granges_obj, tag_matrix){
 
 ####################### PMN 0hrs
 pmn0 <- get_peaks_ucsc('1_20190121000_S59_L006_sort.narrowPeak')
-make_plots(pmn0, promoter)
+pmn0_tag <- getTagMatrix(pmn0, windows = promoter)
+make_plots(pmn0, pmn0_tag)
 
 pmn0_anno <- annotatePeak(pmn0, tssRegion=c(-3000,3000), TxDb=txdb, annoDb="org.Hs.eg.db")
 plotAnnoBar(pmn0_anno)
+
+pmn0_annofreq <- pmn0_anno@annoStat
+pmn0_annofreq$absval <- (pmn0_annofreq$Frequency * 0.01) *length(pmn0_anno@anno)
+
+png("pmn0_annobar.png", 1600, 700, pointsize = 15, res = 200)
+p <- plot_abs_anno_bar(pmn0_annofreq)
+show(p)
+dev.off()
+
 upsetplot(pmn0_anno)
 
 pmn0_genes <- as.data.frame(pmn0_anno)$geneId
 pmn0_path <- enrichPathway(pmn0_genes)
 pmn0_dose <- enrichDO(gene = pmn0_genes)
+
+
 
 #################### PMN 8hrs
 pmn8 <- get_peaks_ucsc('2_20190121000_S60_L006_sort.narrowPeak')
@@ -131,7 +148,7 @@ pmn8_hpk <- get_peaks_ucsc('4_20190121000_S62_L006_sort.narrowPeak')
 pmn8_hpk_tag <- getTagMatrix(pmn8_hpk, windows = promoter)
 make_plots(pmn8_hpk, pmn8_hp_tag)
 
-pmn8_hpk_anno <- annotatePeak(pmn8_hp, tssRegion=c(-3000,3000), TxDb=txdb, annoDb="org.Hs.eg.db")
+pmn8_hpk_anno <- annotatePeak(pmn8_hpk, tssRegion=c(-3000,3000), TxDb=txdb, annoDb="org.Hs.eg.db")
 plotAnnoBar(pmn8_hpk_anno)
 upsetplot(pmn8_hpk_anno)
 
